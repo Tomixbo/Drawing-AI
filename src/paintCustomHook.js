@@ -68,8 +68,13 @@ const usePaintCustomHook = (width, height) => {
 
   // Function to clean the canvas
   const handleClean = () => {
+    const canvas = canvasRef.current;
     if (ctx.current) {
       ctx.current.clearRect(0, 0, width, height);
+
+      // Fill the canvas with white color
+      ctx.current.fillStyle = 'white';
+      ctx.current.fillRect(0, 0, canvas.width, canvas.height);
     }
   };
 
