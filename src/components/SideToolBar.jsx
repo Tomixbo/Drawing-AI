@@ -10,23 +10,25 @@ export default function SideToolBar({
   activeTool
 }) {
   return (
-    <aside className='p-1 h-full shadow-lg flex flex-col items-center w-12 bg-neutral-700 z-20 border-2 border-neutral-800'>
-      <div className='w-full h-px bg-neutral-800 mt-10 mb-4'></div>
-      <div className='flex flex-col items-center space-y-3'>
-        <button className={`p-1 ${activeTool === 'brush' ? 'bg-neutral-800' : 'bg-neutral-700'} hover:bg-neutral-800 `} onClick={handleBrush}>
+    <aside className='p-1 shadow-lg flex flex-col items-center w-10 bg-neutral-600 z-20 border-2 border-neutral-700'>
+      
+      <div className='flex flex-col items-center space-y-3 mt-3'>
+        
+
+        <button className={`p-1 ${activeTool === 'brush' ? 'bg-neutral-700' : 'bg-neutral-600'} hover:bg-neutral-700 `} onClick={handleBrush}>
           <FontAwesomeIcon icon={faPaintBrush} className="text-xl text-white" />
         </button>
 
-        <button className={`p-1 flex items-center ${activeTool === 'eraser' ? 'bg-neutral-800' : 'bg-neutral-700'} hover:bg-neutral-800 `} onClick={handleEraser}>
+        <button className={`p-1 flex items-center ${activeTool === 'eraser' ? 'bg-neutral-700' : 'bg-neutral-600'} hover:bg-neutral-700 `} onClick={handleEraser}>
           <FontAwesomeIcon icon={faEraser} className="text-xl text-white" />
         </button>
 
-        <button className={`p-1 ${activeTool === 'fill' ? 'bg-neutral-800' : 'bg-neutral-700'} hover:bg-neutral-800`} onClick={handleFillTool}>
+        <button className={`p-1 ${activeTool === 'fill' ? 'bg-neutral-700' : 'bg-neutral-600'} hover:bg-neutral-700`} onClick={handleFillTool}>
           <FontAwesomeIcon icon={faFillDrip} className="text-xl text-white" />
         </button>
       </div>
 
-      <div className='w-full h-px bg-neutral-800 my-4'></div>
+      <div className='w-full h-px bg-neutral-700 my-4'></div>
 
       <input type='color' className='w-6 h-6 cursor-pointer border-2 border-white shadow-sm' onChange={handleColor} />
     </aside>

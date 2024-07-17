@@ -16,6 +16,9 @@ def transform_image():
     if file.filename == '':
         return "No selected file", 400
 
+    prompt = request.form.get('prompt')  # Get the prompt from the form data
+    print(f"Received prompt: {prompt}")  # Print the prompt to the console
+
     image = Image.open(file)
     grayscale_image = ImageOps.grayscale(image)
 

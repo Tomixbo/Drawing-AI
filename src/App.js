@@ -12,6 +12,7 @@ function App() {
   const [{ canvasRef, activeTool, thickness }, { initialize, handleColor, handleEraser, handleBrush, handleThickness, handleClean, handleFillTool, handleFill }] = usePaintCustomHook(canvasWidth, canvasHeight);
 
   const [transformedImage, setTransformedImage] = useState(null);
+  const [prompt, setPrompt] = useState('');
 
   const updateTransformedImage = useCallback(async () => {
     if (!canvasRef.current) return;
@@ -20,6 +21,7 @@ function App() {
     canvas.toBlob(async (blob) => {
       const formData = new FormData();
       formData.append('file', blob, 'canvas.png');
+      formData.append('prompt', prompt); // Add prompt to FormData
 
       try {
         const response = await axios.post('http://localhost:5000/transform', formData, {
@@ -32,7 +34,7 @@ function App() {
         console.error('Error transforming image:', error);
       }
     }, 'image/png');
-  }, [canvasRef]);
+  }, [canvasRef, prompt]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -53,17 +55,17 @@ function App() {
   }, [canvasRef, updateTransformedImage]);
 
   return (
-    <div className='h-screen flex'>
-      <SideToolBar
-        handleColor={handleColor}
-        handleBrush={handleBrush}
-        handleEraser={handleEraser}
-        handleFillTool={handleFillTool}
-        activeTool={activeTool}
-      />
-      <div className='flex flex-col flex-1'>
-        <TopToolBar handleThickness={handleThickness} handleClean={handleClean} />
-        <div className='flex flex-1 justify-between'>
+    <div className='h-screen flex flex-col'>
+      <TopToolBar handleThickness={handleThickness} handleClean={handleClean} transformedImage={transformedImage} prompt={prompt} setPrompt={setPrompt} />
+      <div className='flex flex-1'>
+        <SideToolBar
+          handleColor={handleColor}
+          handleBrush={handleBrush}
+          handleEraser={handleEraser}
+          handleFillTool={handleFillTool}
+          activeTool={activeTool}
+        />
+        <div className='flex flex-1'>
           <CanvasPreviews
             canvasRef={canvasRef}
             initialize={initialize}
@@ -72,10 +74,10 @@ function App() {
             thickness={thickness}
             width={canvasWidth}
             height={canvasHeight}
-            border="1px solid #e2e8f0"
+            border="1px solid #333333"
           />
-          <div className='p-6 h-full bg-neutral-700 shadow-inner flex flex-col items-center '>
-            {transformedImage && <img src={transformedImage} alt='Transformed Canvas' className='bg-white ' style={{ width: canvasWidth, height: canvasHeight }} />}
+          <div className='p-6 bg-neutral-700 shadow-inner flex flex-col flex-none items-center'>
+            {transformedImage && <img src={transformedImage} alt='Transformed Canvas' className='bg-white' style={{ width: canvasWidth, height: canvasHeight }} />}
             <h2 className='text-lg text-white font-semibold mt-4'>Transformed Image (Grayscale)</h2>
           </div>
         </div>
