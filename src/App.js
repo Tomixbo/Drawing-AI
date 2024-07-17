@@ -63,7 +63,7 @@ function App() {
       />
       <div className='flex flex-col flex-1'>
         <TopToolBar handleThickness={handleThickness} handleClean={handleClean} />
-        <div className='flex flex-1'>
+        <div className='flex flex-1 justify-between'>
           <CanvasPreviews
             canvasRef={canvasRef}
             initialize={initialize}
@@ -74,9 +74,9 @@ function App() {
             height={canvasHeight}
             border="1px solid #e2e8f0"
           />
-          <div className='p-6 w-1/2 h-full bg-slate-200 shadow-inner'>
-            {transformedImage && <img src={transformedImage} alt='Transformed Canvas' className='bg-white' style={{ width: canvasWidth, height: canvasHeight }} />}
-            <h2 className='text-lg font-semibold mt-4'>Transformed Image (Grayscale)</h2>
+          <div className='p-6 h-full bg-neutral-700 shadow-inner flex flex-col items-center '>
+            {transformedImage && <img src={transformedImage} alt='Transformed Canvas' className='bg-white ' style={{ width: canvasWidth, height: canvasHeight }} />}
+            <h2 className='text-lg text-white font-semibold mt-4'>Transformed Image (Grayscale)</h2>
           </div>
         </div>
       </div>
