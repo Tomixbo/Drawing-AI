@@ -1,0 +1,37 @@
+.hidden-color-input {
+  display: none;
+}
+
+.primary-color-button {
+  width: 60%;
+  height: 60%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+
+.background-color-button {
+  width: 60%;
+  height: 60%;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
+}
+
+.relative {
+  position: relative;
+}
+
+.flip-color-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30%;
+  height: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
