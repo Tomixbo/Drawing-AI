@@ -7,9 +7,9 @@ import usePaintCustomHook from './paintCustomHook';
 import { useEffect, useState, useCallback } from 'react';
 
 function App() {
-  const canvasWidth = 600;
-  const canvasHeight = 600;
-  const [{ canvasRef, activeTool, thickness }, { initialize, handleColor, handleEraser, handleBrush, handleThickness, handleClean, handleFillTool, handleFill }] = usePaintCustomHook(canvasWidth, canvasHeight);
+  const canvasWidth = 512;
+  const canvasHeight = 512;
+  const [{ canvasRef, activeTool, thickness, backgroundColor, currentColor }, { initialize, handleColor, handleBackgroundColor, handleBrush, handleEraser, handleThickness, handleClean, handleFillTool, handleFill, undo, redo }] = usePaintCustomHook(canvasWidth, canvasHeight);
 
   const [transformedImage, setTransformedImage] = useState(null);
   const [prompt, setPrompt] = useState('');
@@ -56,14 +56,17 @@ function App() {
 
   return (
     <div className='h-screen flex flex-col'>
-      <TopToolBar handleThickness={handleThickness} handleClean={handleClean} transformedImage={transformedImage} prompt={prompt} setPrompt={setPrompt} />
+      <TopToolBar handleThickness={handleThickness} handleClean={handleClean} transformedImage={transformedImage} prompt={prompt} setPrompt={setPrompt} thickness={thickness} undo={undo} redo={redo} />
       <div className='flex flex-1'>
         <SideToolBar
           handleColor={handleColor}
+          handleBackgroundColor={handleBackgroundColor}
           handleBrush={handleBrush}
           handleEraser={handleEraser}
           handleFillTool={handleFillTool}
           activeTool={activeTool}
+          currentColor={currentColor} // Pass the currentColor prop
+          backgroundColor={backgroundColor} // Pass the backgroundColor prop
         />
         <div className='flex flex-1'>
           <CanvasPreviews
