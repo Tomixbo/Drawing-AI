@@ -44,12 +44,10 @@ function App() {
       };
       // Attach the event listener
       canvas.addEventListener('mouseup', handleCanvasChange);
-      canvas.addEventListener('mouseout', handleCanvasChange);
 
       return () => {
         // Clean up the event listener
         canvas.removeEventListener('mouseup', handleCanvasChange);
-        canvas.removeEventListener('mouseout', handleCanvasChange);
       };
     }
   }, [canvasRef, updateTransformedImage]);
@@ -81,7 +79,7 @@ function App() {
           />
           <div className='p-6 bg-neutral-700 shadow-inner flex flex-col flex-none items-center'>
             {transformedImage && <img src={transformedImage} alt='Transformed Canvas' className='bg-white' style={{ width: canvasWidth, height: canvasHeight }} />}
-            <h2 className='text-lg text-white font-semibold mt-4'>Transformed Image (Grayscale)</h2>
+            <h2 className='text-lg text-white font-semibold mt-4'>Generated Image</h2>
           </div>
         </div>
       </div>

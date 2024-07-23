@@ -1,18 +1,53 @@
 import React, { useState } from 'react';
 import { faTrash, faDownload, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import piexif from 'piexifjs';
 
 export default function TopToolBar({ handleThickness, handleClean, transformedImage, prompt, setPrompt, thickness, undo, redo }) {
   const [inputValue, setInputValue] = useState(`${thickness} px`);
 
+  // const handleSaveImage = () => {
+  //   if (!transformedImage) return;
+  //   const link = document.createElement('a');
+  //   link.href = transformedImage;
+  //   link.download = 'transformed-image.png';
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  // };
+
   const handleSaveImage = () => {
     if (!transformedImage) return;
-    const link = document.createElement('a');
-    link.href = transformedImage;
-    link.download = 'transformed-image.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    const img = new Image();
+    img.src = transformedImage;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob((blob) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const binaryData = reader.result.split(',')[1];
+          const exifObj = { "0th": {}, "Exif": {}, "GPS": {}, "Interop": {}, "1st": {}, "thumbnail": null };
+          exifObj["0th"][piexif.ImageIFD.ImageDescription] = prompt;
+
+          const exifBytes = piexif.dump(exifObj);
+          const newDataUrl = piexif.insert(exifBytes, `data:image/jpeg;base64,${binaryData}`);
+
+          const link = document.createElement('a');
+          link.href = newDataUrl;
+          link.download = 'transformed-image.jpg';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg');
+    };
   };
 
   const handleSliderChange = (e) => {
