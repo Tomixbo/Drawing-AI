@@ -4,13 +4,12 @@ import SideToolBar from './components/SideToolBar';
 import CanvasPreviews from './components/CanvasPreviews';
 import TopToolBar from './components/TopToolBar';
 import usePaintCustomHook from './paintCustomHook';
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 function App() {
   const canvasWidth = 512;
   const canvasHeight = 512;
-  const [{ canvasRef, activeTool, thickness, backgroundColor, currentColor }, { initialize, handleColor, handleBackgroundColor, handleBrush, handleEraser, handleThickness, handleClean, handleFillTool, handleFill, undo, redo }] = usePaintCustomHook(canvasWidth, canvasHeight);
-
+  const canvasRef = useRef(null);
   const [transformedImage, setTransformedImage] = useState(null);
   const [prompt, setPrompt] = useState('');
 
@@ -34,27 +33,30 @@ function App() {
         console.error('Error transforming image:', error);
       }
     }, 'image/png');
-  }, [canvasRef, prompt]);
+  }, [prompt]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const handleCanvasChange = () => {
-        updateTransformedImage();
-      };
-      // Attach the event listener
-      canvas.addEventListener('mouseup', handleCanvasChange);
+  const [{ activeTool, thickness, backgroundColor, currentColor }, { initialize, handleColor, handleBackgroundColor, handleBrush, handleEraser, handleThickness, handleClean, handleFillTool, handleFillImage, handleFill, undo, redo }] = usePaintCustomHook(canvasWidth, canvasHeight, canvasRef, updateTransformedImage);
 
-      return () => {
-        // Clean up the event listener
-        canvas.removeEventListener('mouseup', handleCanvasChange);
-      };
-    }
-  }, [canvasRef, updateTransformedImage]);
+
+
+  const handlePromptChange = useCallback((newPrompt) => {
+    setPrompt(newPrompt);
+    updateTransformedImage();
+  }, [updateTransformedImage]);
 
   return (
     <div className='h-screen flex flex-col'>
-      <TopToolBar handleThickness={handleThickness} handleClean={handleClean} transformedImage={transformedImage} prompt={prompt} setPrompt={setPrompt} thickness={thickness} undo={undo} redo={redo} />
+      <TopToolBar 
+        handleThickness={handleThickness} 
+        handleClean={handleClean} 
+        transformedImage={transformedImage} 
+        prompt={prompt} 
+        setPrompt={handlePromptChange} 
+        thickness={thickness} 
+        undo={undo} 
+        redo={redo} 
+        updateTransformedImage={updateTransformedImage}
+      />
       <div className='flex flex-1'>
         <SideToolBar
           handleColor={handleColor}
@@ -62,6 +64,7 @@ function App() {
           handleBrush={handleBrush}
           handleEraser={handleEraser}
           handleFillTool={handleFillTool}
+          handleFillImage={handleFillImage}
           activeTool={activeTool}
           currentColor={currentColor} // Pass the currentColor prop
           backgroundColor={backgroundColor} // Pass the backgroundColor prop

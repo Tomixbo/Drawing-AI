@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { faEraser, faPaintBrush, faFillDrip, faChevronRight, faChevronLeft, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import React, { useState, useRef } from 'react';
+import { faEraser, faPaintBrush, faFillDrip, faChevronRight, faChevronLeft, faArrowsRotate, faImage } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function SideToolBar({
@@ -8,11 +8,13 @@ export default function SideToolBar({
   handleBrush,
   handleEraser,
   handleFillTool,
+  handleFillImage,
   activeTool,
   currentColor,
   backgroundColor
 }) {
   const [isMaximized, setIsMaximized] = useState(false);
+  const fileInputRef = useRef(null); // Référence pour l'élément de saisie de fichier
 
   const toggleSidebar = () => {
     setIsMaximized(!isMaximized);
@@ -22,6 +24,19 @@ export default function SideToolBar({
     const temp = currentColor;
     handleColor({ currentTarget: { value: backgroundColor } });
     handleBackgroundColor({ currentTarget: { value: temp } });
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => handleFillImage(img);
+      img.src = event.target.result;
+    };
+    if (file) {
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -46,6 +61,18 @@ export default function SideToolBar({
         <button className={`h-8 p-1 flex items-center ${activeTool === 'fill' ? 'bg-neutral-700' : 'bg-neutral-600'} hover:bg-neutral-700 w-full`} onClick={handleFillTool}>
           <FontAwesomeIcon icon={faFillDrip} className="text-xl text-white" />
           {isMaximized && <span className='mx-2 text-white'>Fill</span>}
+        </button>
+
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden-file-input" // Utiliser la classe CSS pour cacher le bouton
+          ref={fileInputRef} // Assigner la référence
+          onChange={handleImageUpload}
+        />
+        <button className={`h-8 p-1 flex items-center bg-neutral-600 hover:bg-neutral-700 w-full`} onClick={() => fileInputRef.current.click()}>
+          <FontAwesomeIcon icon={faImage} className="text-xl text-white" />
+          {isMaximized && <span className='mx-2 text-white'>Fill Image</span>}
         </button>
       </div>
 

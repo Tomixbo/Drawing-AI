@@ -1,20 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { faTrash, faDownload, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import piexif from 'piexifjs';
 
-export default function TopToolBar({ handleThickness, handleClean, transformedImage, prompt, setPrompt, thickness, undo, redo }) {
+export default function TopToolBar({ handleThickness, handleClean, transformedImage, prompt, setPrompt, thickness, undo, redo, updateTransformedImage }) {
   const [inputValue, setInputValue] = useState(`${thickness} px`);
-
-  // const handleSaveImage = () => {
-  //   if (!transformedImage) return;
-  //   const link = document.createElement('a');
-  //   link.href = transformedImage;
-  //   link.download = 'transformed-image.png';
-  //   document.body.appendChild(link);
-  //   link.click();
-  //   document.body.removeChild(link);
-  // };
+  const [tempPrompt, setTempPrompt] = useState(prompt);
 
   const handleSaveImage = () => {
     if (!transformedImage) return;
@@ -81,6 +72,25 @@ export default function TopToolBar({ handleThickness, handleClean, transformedIm
     validateAndFormatInput(e.target.value);
   };
 
+  const handlePromptChange = (e) => {
+    setTempPrompt(e.target.value);
+  };
+
+  const handlePromptKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      setPrompt(tempPrompt);
+    }
+  };
+
+  const handlePromptBlur = () => {
+    setPrompt(tempPrompt);
+  };
+
+  // Update transformed image when prompt changes
+  useEffect(() => {
+    updateTransformedImage();
+  }, [prompt, updateTransformedImage]);
+
   return (
     <header className='border-2 border-neutral-700 w-full px-1.5 py-1 flex bg-neutral-600 shadow-sm z-10 '>
       <div className='flex flex-none justify-start items-center'>
@@ -132,8 +142,10 @@ export default function TopToolBar({ handleThickness, handleClean, transformedIm
           <p className='text-white text-xs'>Prompt:</p>
           <input
             type='text'
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            value={tempPrompt}
+            onChange={handlePromptChange}
+            onKeyPress={handlePromptKeyPress}
+            onBlur={handlePromptBlur}
             className='p-1 bg-neutral-500 text-white text-xs border-none rounded w-full focus:outline-none'
           />
         </div>

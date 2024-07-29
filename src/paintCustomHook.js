@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const usePaintCustomHook = (width, height) => {
-  const canvasRef = useRef(null);
+const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) => {
   const lastX = useRef(0);
   const lastY = useRef(0);
   const [currentColor, setCurrentColor] = useState('#000000');
@@ -23,7 +22,7 @@ const usePaintCustomHook = (width, height) => {
 
       setRedoStack([]); // Clear the redo stack
     }
-  }, [history, width, height]);
+  }, [history, width, height, canvasRef]);
 
   // Function to handle drawing on the canvas
   const draw = useCallback((event) => {
@@ -55,8 +54,9 @@ const usePaintCustomHook = (width, height) => {
     drawingInProgress.current = false;
     if (activeTool !== 'fill') {
       captureState();
+      updateTransformedImage();
     }
-  }, [captureState, activeTool]);
+  }, [captureState, activeTool, updateTransformedImage]);
 
   // Function to handle color change
   const handleColor = (e) => {
@@ -98,6 +98,7 @@ const usePaintCustomHook = (width, height) => {
       ctx.current.fillStyle = 'white';
       ctx.current.fillRect(0, 0, canvas.width, canvas.height);
       captureState();
+      updateTransformedImage();
     }
   };
 
@@ -114,9 +115,8 @@ const usePaintCustomHook = (width, height) => {
       ctx.current.fillRect(0, 0, canvas.width, canvas.height);
       const initialImageData = ctx.current.getImageData(0, 0, width, height);
       setHistory([initialImageData]);
-
     }
-  }, [width, height]);
+  }, [width, height, canvasRef]);
 
   const undo = () => {
     if (history.length <= 1) return;
@@ -131,6 +131,7 @@ const usePaintCustomHook = (width, height) => {
     if (ctx.current) {
       ctx.current.putImageData(newHistory[newHistory.length - 1], 0, 0);
     }
+    updateTransformedImage();
   };
 
   const redo = () => {
@@ -146,6 +147,17 @@ const usePaintCustomHook = (width, height) => {
     if (ctx.current) {
       ctx.current.putImageData(redoState, 0, 0);
     }
+    updateTransformedImage();
+  };
+
+  // Function to handle fill image action on the canvas
+  const handleFillImage = (img) => {
+    if (ctx.current) {
+      ctx.current.clearRect(0, 0, width, height);
+      ctx.current.drawImage(img, 0, 0, width, height);
+      captureState();
+      updateTransformedImage();
+    }
   };
 
   useEffect(() => {
@@ -159,7 +171,7 @@ const usePaintCustomHook = (width, height) => {
           drawingInProgress.current = false;
         }
       });
-  
+
       return () => {
         canvas.removeEventListener('mousemove', draw);
         canvas.removeEventListener('mouseup', stopDrawing);
@@ -171,7 +183,7 @@ const usePaintCustomHook = (width, height) => {
         });
       };
     }
-  }, [draw, handleMouseDown, stopDrawing]);
+  }, [draw, handleMouseDown, stopDrawing, canvasRef]);
 
   // Function to handle fill action on the canvas
   const handleFill = (startX, startY) => {
@@ -207,6 +219,7 @@ const usePaintCustomHook = (width, height) => {
 
     ctx.current.putImageData(imageData, 0, 0);
     captureState();
+    updateTransformedImage();
   };
 
   // Function to convert hex color to RGB
@@ -245,8 +258,8 @@ const usePaintCustomHook = (width, height) => {
   }, [currentColor, backgroundColor, thickness, activeTool]);
 
   return [
-    { canvasRef, thickness, activeTool, currentColor, backgroundColor },
-    { initialize, handleColor, handleBackgroundColor, handleEraser, handleBrush, handleThickness, handleClean, handleFillTool, handleFill, undo, redo }
+    { thickness, activeTool, currentColor, backgroundColor },
+    { initialize, handleColor, handleBackgroundColor, handleEraser, handleBrush, handleThickness, handleClean, handleFillTool, handleFillImage, handleFill, undo, redo }
   ];
 };
 
