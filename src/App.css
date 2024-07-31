@@ -39,3 +39,7 @@
 .hidden-file-input {
   display: none;
 }
+
+body{
+  min-width: 600px;
+}

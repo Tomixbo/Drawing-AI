@@ -70,7 +70,7 @@ export default function SideToolBar({
           ref={fileInputRef} // Assigner la référence
           onChange={handleImageUpload}
         />
-        <button className={`h-8 p-1 flex items-center bg-neutral-600 hover:bg-neutral-700 w-full`} onClick={() => fileInputRef.current.click()}>
+        <button className={`h-8 p-1.5 flex items-center bg-neutral-600 hover:bg-neutral-700 w-full`} onClick={() => fileInputRef.current.click()}>
           <FontAwesomeIcon icon={faImage} className="text-xl text-white" />
           {isMaximized && <span className='mx-2 text-white'>Fill Image</span>}
         </button>

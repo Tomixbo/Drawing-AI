@@ -4,7 +4,7 @@ import SideToolBar from './components/SideToolBar';
 import CanvasPreviews from './components/CanvasPreviews';
 import TopToolBar from './components/TopToolBar';
 import usePaintCustomHook from './paintCustomHook';
-import { useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 function App() {
   const canvasWidth = 512;
@@ -35,9 +35,23 @@ function App() {
     }, 'image/png');
   }, [prompt]);
 
-  const [{ activeTool, thickness, backgroundColor, currentColor }, { initialize, handleColor, handleBackgroundColor, handleBrush, handleEraser, handleThickness, handleClean, handleFillTool, handleFillImage, handleFill, undo, redo }] = usePaintCustomHook(canvasWidth, canvasHeight, canvasRef, updateTransformedImage);
+  const [{ activeTool, thickness, backgroundColor, currentColor, opacity }, { initialize, handleColor, handleBackgroundColor, handleBrush, handleEraser, handleThickness, handleOpacity, handleClean, handleFillTool, handleFillImage, handleFill, handleApplyTransformedImage, undo, redo }] = usePaintCustomHook(canvasWidth, canvasHeight, canvasRef, updateTransformedImage);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const handleCanvasChange = () => {
+        updateTransformedImage();
+      };
+      // Attach the event listener
+      canvas.addEventListener('mouseup', handleCanvasChange);
 
+      return () => {
+        // Clean up the event listener
+        canvas.removeEventListener('mouseup', handleCanvasChange);
+      };
+    }
+  }, [canvasRef, updateTransformedImage]);
 
   const handlePromptChange = useCallback((newPrompt) => {
     setPrompt(newPrompt);
@@ -45,17 +59,20 @@ function App() {
   }, [updateTransformedImage]);
 
   return (
-    <div className='h-screen flex flex-col'>
+    <div className='h-screen flex flex-col '>
       <TopToolBar 
         handleThickness={handleThickness} 
+        handleOpacity={handleOpacity} 
         handleClean={handleClean} 
         transformedImage={transformedImage} 
         prompt={prompt} 
         setPrompt={handlePromptChange} 
         thickness={thickness} 
+        opacity={opacity} 
         undo={undo} 
         redo={redo} 
         updateTransformedImage={updateTransformedImage}
+        handleApplyTransformedImage={() => handleApplyTransformedImage(transformedImage)}
       />
       <div className='flex flex-1'>
         <SideToolBar
@@ -69,7 +86,7 @@ function App() {
           currentColor={currentColor} // Pass the currentColor prop
           backgroundColor={backgroundColor} // Pass the backgroundColor prop
         />
-        <div className='flex flex-1'>
+        <div className='flex flex-1 flex-wrap '>
           <CanvasPreviews
             canvasRef={canvasRef}
             initialize={initialize}
@@ -80,9 +97,9 @@ function App() {
             height={canvasHeight}
             border="1px solid #333333"
           />
-          <div className='p-6 bg-neutral-700 shadow-inner flex flex-col flex-none items-center'>
+          <div className='p-6 bg-neutral-700 shadow-inner flex flex-col flex-none xl:items-center w-full xl:w-auto '>
             {transformedImage && <img src={transformedImage} alt='Transformed Canvas' className='bg-white' style={{ width: canvasWidth, height: canvasHeight }} />}
-            <h2 className='text-lg text-white font-semibold mt-4'>Generated Image</h2>
+            <h2 className='text-lg text-white font-semibold mt-4 max-xl:ml-44'>Generated Image</h2>
           </div>
         </div>
       </div>
@@ -91,3 +108,4 @@ function App() {
 }
 
 export default App;
+

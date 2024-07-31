@@ -6,6 +6,7 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
   const [currentColor, setCurrentColor] = useState('#000000');
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF'); // Initial background color to white
   const [thickness, setThickness] = useState(2);
+  const [opacity, setOpacity] = useState(100); // Initial opacity
   const [activeTool, setActiveTool] = useState('brush');
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
@@ -88,6 +89,11 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
     setThickness(value);
   };
 
+  // Function to handle opacity change
+  const handleOpacity = (value) => {
+    setOpacity(value);
+  };
+
   // Function to clean the canvas
   const handleClean = () => {
     const canvas = canvasRef.current;
@@ -158,6 +164,20 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
       captureState();
       updateTransformedImage();
     }
+  };
+
+  // Function to handle apply transformed image
+  const handleApplyTransformedImage = (transformedImageSrc) => {
+    const img = new Image();
+    img.src = transformedImageSrc;
+    img.onload = () => {
+      if (ctx.current) {
+        ctx.current.clearRect(0, 0, width, height);
+        ctx.current.drawImage(img, 0, 0, width, height);
+        captureState();
+        updateTransformedImage();
+      }
+    };
   };
 
   useEffect(() => {
@@ -254,12 +274,13 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
       ctx.current.globalCompositeOperation = activeTool === 'eraser' ? 'source-over' : 'source-over';
       ctx.current.strokeStyle = activeTool === 'eraser' ? backgroundColor : currentColor;
       ctx.current.lineWidth = thickness;
+      ctx.current.globalAlpha = opacity / 100; // Set opacity
     }
-  }, [currentColor, backgroundColor, thickness, activeTool]);
+  }, [currentColor, backgroundColor, thickness, activeTool, opacity]);
 
   return [
-    { thickness, activeTool, currentColor, backgroundColor },
-    { initialize, handleColor, handleBackgroundColor, handleEraser, handleBrush, handleThickness, handleClean, handleFillTool, handleFillImage, handleFill, undo, redo }
+    { thickness, activeTool, currentColor, backgroundColor, opacity },
+    { initialize, handleColor, handleBackgroundColor, handleEraser, handleBrush, handleThickness, handleOpacity, handleClean, handleFillTool, handleFillImage, handleFill, handleApplyTransformedImage, undo, redo }
   ];
 };
 
