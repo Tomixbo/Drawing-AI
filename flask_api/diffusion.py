@@ -37,10 +37,10 @@ CONTROLNET_CANNYSEG_LOCATION     = "c:/Users/tomixbo/Documents/Tombo_personnal/m
 TORCH_DEVICE, TORCH_DTYPE     = choose_device()  
 GUIDANCE_SCALE                = 100 # 0 for sdxl turbo (hardcoded already)
 INFERENCE_STEPS               = 4 #4 for lcm (high quality) #2 for turbo
-DEFAULT_NOISE_STRENGTH        = 1. # 0.5 works well too
-CONDITIONING_SCALE            = 0.6 # .5 works well too
+DEFAULT_NOISE_STRENGTH        = 0.5 # 0.5 works well too
+CONDITIONING_SCALE            = 0.8 # .5 works well too
 GUIDANCE_START                = 0.
-GUIDANCE_END                  = 0.8
+GUIDANCE_END                  = 0.5
 RANDOM_SEED                   = 21
 HEIGHT                        = 512 #512 #384 #512
 WIDTH                         = 512 #512 #384 #512
@@ -54,10 +54,10 @@ def convert_numpy_image_to_pil_image(image):
     # return Image.fromarray(cv.cvtColor(image, cv.COLOR_BGR2RGB))
     return Image.fromarray(image)
 
-def process_lcm(image, lower_threshold = 100, upper_threshold = 100, aperture=3): 
-    # image = np.array(image)
-    # image = cv.Canny(image, lower_threshold, upper_threshold,apertureSize=aperture)
-    # image = np.repeat(image[:, :, np.newaxis], 3, axis=2)
+def process_lcm(image, lower_threshold = 60, upper_threshold = 60, aperture=3): 
+    image = np.array(image)
+    image = cv.Canny(image, lower_threshold, upper_threshold,apertureSize=aperture)
+    image = np.repeat(image[:, :, np.newaxis], 3, axis=2)
     return image
 
 def process_sdxlturbo(image):
@@ -69,11 +69,10 @@ def prepare_lcm_controlnet_or_sdxlturbo_pipeline():
 
         controlnet = ControlNetModel.from_pretrained(CONTROLNET_CANNY_LOCATION, torch_dtype=TORCH_DTYPE,
                                                 use_safetensors=True)
-        controlnetseg = ControlNetModel.from_pretrained(CONTROLNET_CANNYSEG_LOCATION, torch_dtype=TORCH_DTYPE,
-                                                use_safetensors=True)
+        # controlnetseg = ControlNetModel.from_pretrained(CONTROLNET_CANNYSEG_LOCATION, torch_dtype=TORCH_DTYPE, use_safetensors=True)
     
         pipeline = StableDiffusionControlNetPipeline.from_pretrained(LCM_MODEL_LOCATION,
-                                                        controlnet=controlnetseg, 
+                                                        controlnet=controlnet, 
                                                         # unet=unet,
                                                         torch_dtype=TORCH_DTYPE, safety_checker=None).to(TORCH_DEVICE)
 
@@ -129,6 +128,7 @@ def run_lcm_or_sdxl(pipeline, img, prompt):
     pil_image   = convert_numpy_image_to_pil_image(numpy_image)
     # pil_image_rgb = cv2.cvtColor(pil_image, cv2.COLOR_BGR2RGB)
     result   = run_model(pipeline, pil_image, prompt)
+    # result = pil_image
 
     # result_image = cv.cvtColor(np.array(pil_image_rgb), cv.COLOR_RGB2BGR)
 

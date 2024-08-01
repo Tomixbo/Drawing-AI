@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { faTrash, faDownload, faUndo, faRedo, faAnglesLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import piexif from 'piexifjs';
@@ -118,10 +118,7 @@ export default function TopToolBar({ handleThickness, handleOpacity, handleClean
     setPrompt(tempPrompt);
   };
 
-  // Update transformed image when prompt changes
-  useEffect(() => {
-    updateTransformedImage();
-  }, [prompt, updateTransformedImage]);
+
 
   return (
 

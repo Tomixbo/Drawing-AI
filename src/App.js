@@ -4,7 +4,7 @@ import SideToolBar from './components/SideToolBar';
 import CanvasPreviews from './components/CanvasPreviews';
 import TopToolBar from './components/TopToolBar';
 import usePaintCustomHook from './paintCustomHook';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 function App() {
   const canvasWidth = 512;
@@ -37,21 +37,7 @@ function App() {
 
   const [{ activeTool, thickness, backgroundColor, currentColor, opacity }, { initialize, handleColor, handleBackgroundColor, handleBrush, handleEraser, handleThickness, handleOpacity, handleClean, handleFillTool, handleFillImage, handleFill, handleApplyTransformedImage, undo, redo }] = usePaintCustomHook(canvasWidth, canvasHeight, canvasRef, updateTransformedImage);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const handleCanvasChange = () => {
-        updateTransformedImage();
-      };
-      // Attach the event listener
-      canvas.addEventListener('mouseup', handleCanvasChange);
-
-      return () => {
-        // Clean up the event listener
-        canvas.removeEventListener('mouseup', handleCanvasChange);
-      };
-    }
-  }, [canvasRef, updateTransformedImage]);
+  
 
   const handlePromptChange = useCallback((newPrompt) => {
     setPrompt(newPrompt);
