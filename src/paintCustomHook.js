@@ -10,6 +10,7 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
   const [activeTool, setActiveTool] = useState('brush');
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
+  const [pressureSensitivity, setPressureSensitivity] = useState(false); // Pressure sensitivity state
 
   const ctx = useRef(null);
   const drawingInProgress = useRef(false);
@@ -26,21 +27,30 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
   }, [history, width, height, canvasRef]);
 
   // Function to handle drawing on the canvas
+  // const [pressureMultiplier, setPressureMultiplier] = useState(0.5); // Sensibilité de la pression
+  const pressureMultiplier = 0.4; 
+
   const draw = useCallback((event) => {
     if (!drawingInProgress.current || !ctx.current) return;
-
+  
     if (activeTool === 'eraser') {
       ctx.current.strokeStyle = backgroundColor;
     } else {
       ctx.current.strokeStyle = currentColor;
+      ctx.current.globalAlpha = pressureSensitivity ? Math.min((event.pressure || 0.1) * pressureMultiplier * (opacity / 100), 1) : opacity / 100;
     }
-
+  
     ctx.current.beginPath();
     ctx.current.moveTo(lastX.current, lastY.current);
     ctx.current.lineTo(event.offsetX, event.offsetY);
     ctx.current.stroke();
     [lastX.current, lastY.current] = [event.offsetX, event.offsetY];
-  }, [activeTool, currentColor, backgroundColor]);
+  }, [activeTool, currentColor, backgroundColor, opacity, pressureSensitivity, pressureMultiplier]);
+  
+  // Ajoutez une fonction pour mettre à jour le multiplicateur de pression
+  // const handlePressureMultiplierChange = (value) => {
+  //   setPressureMultiplier(value);
+  // };
 
   // Function to handle mouse down event
   const handleMouseDown = useCallback((e) => {
@@ -92,6 +102,11 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
   // Function to handle opacity change
   const handleOpacity = (value) => {
     setOpacity(value);
+  };
+
+  // Function to handle pressure sensitivity change
+  const handlePressureSensitivity = () => {
+    setPressureSensitivity(!pressureSensitivity);
   };
 
   // Function to clean the canvas
@@ -183,20 +198,20 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
-      canvas.addEventListener('mousemove', draw);
-      canvas.addEventListener('mouseup', stopDrawing);
-      canvas.addEventListener('mousedown', handleMouseDown);
-      canvas.addEventListener('mouseout', () => {
+      canvas.addEventListener('pointermove', draw);
+      canvas.addEventListener('pointerup', stopDrawing);
+      canvas.addEventListener('pointerdown', handleMouseDown);
+      canvas.addEventListener('pointerout', () => {
         if (drawingInProgress.current) {
           drawingInProgress.current = false;
         }
       });
 
       return () => {
-        canvas.removeEventListener('mousemove', draw);
-        canvas.removeEventListener('mouseup', stopDrawing);
-        canvas.removeEventListener('mousedown', handleMouseDown);
-        canvas.removeEventListener('mouseout', () => {
+        canvas.removeEventListener('pointermove', draw);
+        canvas.removeEventListener('pointerup', stopDrawing);
+        canvas.removeEventListener('pointerdown', handleMouseDown);
+        canvas.removeEventListener('pointerout', () => {
           if (drawingInProgress.current) {
             drawingInProgress.current = false;
           }
@@ -279,8 +294,8 @@ const usePaintCustomHook = (width, height, canvasRef, updateTransformedImage) =>
   }, [currentColor, backgroundColor, thickness, activeTool, opacity]);
 
   return [
-    { thickness, activeTool, currentColor, backgroundColor, opacity },
-    { initialize, handleColor, handleBackgroundColor, handleEraser, handleBrush, handleThickness, handleOpacity, handleClean, handleFillTool, handleFillImage, handleFill, handleApplyTransformedImage, undo, redo }
+    { thickness, activeTool, currentColor, backgroundColor, opacity, pressureSensitivity },
+    { initialize, handleColor, handleBackgroundColor, handleEraser, handleBrush, handleThickness, handleOpacity, handlePressureSensitivity, handleClean, handleFillTool, handleFillImage, handleFill, handleApplyTransformedImage, undo, redo }
   ];
 };
 

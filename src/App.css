@@ -40,6 +40,18 @@
   display: none;
 }
 
-body{
+
+/* Désactiver la sélection de texte sur toute l'application */
+body {
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10+ */
   min-width: 600px;
+}
+
+/* Réactiver la sélection de texte pour les zones où c'est nécessaire */
+.selectable {
+  user-select: text;
+  -webkit-user-select: text; /* Safari */
+  -ms-user-select: text; /* IE 10+ */
 }

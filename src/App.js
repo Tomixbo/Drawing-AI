@@ -6,6 +6,17 @@ import TopToolBar from './components/TopToolBar';
 import usePaintCustomHook from './paintCustomHook';
 import { useState, useCallback, useRef } from 'react';
 
+// Fonction debounce pour limiter la fréquence d'appels à l'API
+const debounce = (func, wait) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func.apply(this, args);
+    }, wait);
+  };
+};
+
 function App() {
   const canvasWidth = 512;
   const canvasHeight = 512;
@@ -13,36 +24,36 @@ function App() {
   const [transformedImage, setTransformedImage] = useState(null);
   const [prompt, setPrompt] = useState('');
 
-  const updateTransformedImage = useCallback(async () => {
-    if (!canvasRef.current) return;
+  const debouncedUpdateTransformedImage = useRef(
+    debounce(async (currentPrompt) => {
+      if (!canvasRef.current) return;
 
-    const canvas = canvasRef.current;
-    canvas.toBlob(async (blob) => {
-      const formData = new FormData();
-      formData.append('file', blob, 'canvas.png');
-      formData.append('prompt', prompt); // Add prompt to FormData
+      const canvas = canvasRef.current;
+      canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append('file', blob, 'canvas.png');
+        formData.append('prompt', currentPrompt); // Utiliser le prompt passé en argument
 
-      try {
-        const response = await axios.post('http://localhost:5000/transform', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        setTransformedImage(response.data.image);
-      } catch (error) {
-        console.error('Error transforming image:', error);
-      }
-    }, 'image/png');
-  }, [prompt]);
+        try {
+          const response = await axios.post('http://localhost:5000/transform', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          setTransformedImage(response.data.image);
+        } catch (error) {
+          console.error('Error transforming image:', error);
+        }
+      }, 'image/png');
+    }, 1000)
+  ).current;
 
-  const [{ activeTool, thickness, backgroundColor, currentColor, opacity }, { initialize, handleColor, handleBackgroundColor, handleBrush, handleEraser, handleThickness, handleOpacity, handleClean, handleFillTool, handleFillImage, handleFill, handleApplyTransformedImage, undo, redo }] = usePaintCustomHook(canvasWidth, canvasHeight, canvasRef, updateTransformedImage);
-
-  
+  const [{ activeTool, thickness, backgroundColor, currentColor, opacity, pressureSensitivity }, { initialize, handleColor, handleBackgroundColor, handleBrush, handleEraser, handleThickness, handleOpacity, handlePressureSensitivity, handleClean, handleFillTool, handleFillImage, handleFill, handleApplyTransformedImage, undo, redo }] = usePaintCustomHook(canvasWidth, canvasHeight, canvasRef, () => debouncedUpdateTransformedImage(prompt));
 
   const handlePromptChange = useCallback((newPrompt) => {
     setPrompt(newPrompt);
-    updateTransformedImage();
-  }, [updateTransformedImage]);
+    debouncedUpdateTransformedImage(newPrompt); // Passez le nouveau prompt ici
+  }, [debouncedUpdateTransformedImage]);
 
   return (
     <div className='h-screen flex flex-col '>
@@ -57,8 +68,10 @@ function App() {
         opacity={opacity} 
         undo={undo} 
         redo={redo} 
-        updateTransformedImage={updateTransformedImage}
+        updateTransformedImage={() => debouncedUpdateTransformedImage(prompt)}
         handleApplyTransformedImage={() => handleApplyTransformedImage(transformedImage)}
+        handlePressureSensitivity={handlePressureSensitivity}
+        pressureSensitivity={pressureSensitivity}
       />
       <div className='flex flex-1'>
         <SideToolBar
@@ -94,4 +107,3 @@ function App() {
 }
 
 export default App;
-

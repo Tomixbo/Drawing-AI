@@ -54,7 +54,7 @@ def convert_numpy_image_to_pil_image(image):
     # return Image.fromarray(cv.cvtColor(image, cv.COLOR_BGR2RGB))
     return Image.fromarray(image)
 
-def process_lcm(image, lower_threshold = 60, upper_threshold = 60, aperture=3): 
+def process_lcm(image, lower_threshold = 80, upper_threshold = 80, aperture=3): 
     image = np.array(image)
     image = cv.Canny(image, lower_threshold, upper_threshold,apertureSize=aperture)
     image = np.repeat(image[:, :, np.newaxis], 3, axis=2)
