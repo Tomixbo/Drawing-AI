@@ -55,3 +55,20 @@ body {
   -webkit-user-select: text; /* Safari */
   -ms-user-select: text; /* IE 10+ */
 }
+
+.loader-bar {
+  width: 0%;
+  animation: loading 5s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}

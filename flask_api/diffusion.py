@@ -4,6 +4,7 @@ from PIL import Image
 from diffusers import (AutoPipelineForImage2Image, StableDiffusionControlNetPipeline,
                        ControlNetModel)
 import torch
+# from xformers.ops import MemoryEfficientAttentionFlashAttentionOp
 
 
 def choose_device(torch_device = None):
@@ -27,63 +28,85 @@ def choose_device(torch_device = None):
 
     return torch_device, torch_dtype
 
+TORCH_DEVICE, TORCH_DTYPE     = choose_device()
 
 
-MODEL                         = "lcm" #"lcm" # or "sdxlturbo"
-SDXLTURBO_MODEL_LOCATION      = 'c:/Users/tomixbo/Documents/Tombo_personnal/models/sdxl-turbo'
-LCM_MODEL_LOCATION            = 'c:/Users/tomixbo/Documents/Tombo_personnal/models/LCM_Dreamshaper_v7'
+# MODELS
+MODEL                         = "realistic_vision"
+CANNY                         = True
+SDXLTURBO_MODEL               = 'c:/Users/tomixbo/Documents/Tombo_personnal/models/sdxl-turbo'
+LCM_MODEL                     = 'c:/Users/tomixbo/Documents/Tombo_personnal/models/LCM_Dreamshaper_v7'
+REALISTIC_MODEL               = "c:/Users/tomixbo/Documents/Tombo_personnal/models/Realistic_Vision_V6.0_B1_noVAE"
 CONTROLNET_CANNY_LOCATION     = "c:/Users/tomixbo/Documents/Tombo_personnal/models/control_v11p_sd15_canny" 
-CONTROLNET_CANNYSEG_LOCATION     = "c:/Users/tomixbo/Documents/Tombo_personnal/models/control_v11p_sd15_seg" 
-TORCH_DEVICE, TORCH_DTYPE     = choose_device()  
-GUIDANCE_SCALE                = 100 # 0 for sdxl turbo (hardcoded already)
-INFERENCE_STEPS               = 4 #4 for lcm (high quality) #2 for turbo
-DEFAULT_NOISE_STRENGTH        = 0.5 # 0.5 works well too
-CONDITIONING_SCALE            = 0.8 # .5 works well too
-GUIDANCE_START                = 0.
-GUIDANCE_END                  = 0.5
+CONTROLNET_CANNYSEG_LOCATION  = "c:/Users/tomixbo/Documents/Tombo_personnal/models/control_v11p_sd15_seg" 
+
+
+# HYPERPARAMETERS
+GUIDANCE_SCALE                = 0. # 0. for sdxl turbo (hardcoded already)
+INFERENCE_STEPS               = 30 # 4 for lcm (high quality) # 2 for turbo # 25 for realistic_vision
+STRENGH                       = 1. # 0.-1.
 RANDOM_SEED                   = 21
 HEIGHT                        = 512 #512 #384 #512
 WIDTH                         = 512 #512 #384 #512
-STRENGH                       = 0. #0-1
+# FOR CONTROLNET
+CONDITIONING_SCALE            = 0.8 # 0.8 # 0.5 works well too
+GUIDANCE_START                = 0.
+GUIDANCE_END                  = 1. 
+
+def select_model():
+    if MODEL == "lcm":
+        return LCM_MODEL
+    elif MODEL == "realistic_vision":
+        return REALISTIC_MODEL
+    elif MODEL == "sdxlturbo":
+        return SDXLTURBO_MODEL
 
 def prepare_seed():
     generator = torch.manual_seed(RANDOM_SEED)
     return generator
 
 def convert_numpy_image_to_pil_image(image):
-    # return Image.fromarray(cv.cvtColor(image, cv.COLOR_BGR2RGB))
     return Image.fromarray(image)
 
-def process_lcm(image, lower_threshold = 80, upper_threshold = 80, aperture=3): 
+def process_canny(image, lower_threshold = 80, upper_threshold = 80, aperture=3): 
     image = np.array(image)
     image = cv.Canny(image, lower_threshold, upper_threshold,apertureSize=aperture)
     image = np.repeat(image[:, :, np.newaxis], 3, axis=2)
     return image
 
-def process_sdxlturbo(image):
+def process(image):
     return image
 
-def prepare_lcm_controlnet_or_sdxlturbo_pipeline():
-
-    if MODEL=="lcm":
+def prepare_pipeline(model_name=select_model(), with_canny=CANNY):
+    if with_canny:
 
         controlnet = ControlNetModel.from_pretrained(CONTROLNET_CANNY_LOCATION, torch_dtype=TORCH_DTYPE,
                                                 use_safetensors=True)
         # controlnetseg = ControlNetModel.from_pretrained(CONTROLNET_CANNYSEG_LOCATION, torch_dtype=TORCH_DTYPE, use_safetensors=True)
     
-        pipeline = StableDiffusionControlNetPipeline.from_pretrained(LCM_MODEL_LOCATION,
+        pipeline = StableDiffusionControlNetPipeline.from_pretrained(model_name,
                                                         controlnet=controlnet, 
                                                         # unet=unet,
                                                         torch_dtype=TORCH_DTYPE, safety_checker=None).to(TORCH_DEVICE)
-
-    elif MODEL=="sdxlturbo":
-
-        pipeline = AutoPipelineForImage2Image.from_pretrained(SDXLTURBO_MODEL_LOCATION, torch_dtype=TORCH_DTYPE,safety_checker=None).to(TORCH_DEVICE)
         
+        # pipeline.enable_xformers_memory_efficient_attention(attention_op=MemoryEfficientAttentionFlashAttentionOp)
+
+        # Workaround for not accepting attention shape using VAE for Flash Attention
+
+        # pipeline.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+
+    else:
+
+        pipeline = AutoPipelineForImage2Image.from_pretrained(model_name, torch_dtype=TORCH_DTYPE,safety_checker=None).to(TORCH_DEVICE)
+        # pipeline.enable_xformers_memory_efficient_attention(attention_op=MemoryEfficientAttentionFlashAttentionOp)
+
+        # Workaround for not accepting attention shape using VAE for Flash Attention
+
+        # pipeline.vae.enable_xformers_memory_efficient_attention(attention_op=None)
+
     return pipeline
 
-def run_lcm(pipeline, ref_image, prompt):
-
+def run_model_canny(pipeline, ref_image, prompt):
     generator = prepare_seed()
     gen_image = pipeline(prompt                        = prompt,
                          num_inference_steps           = INFERENCE_STEPS, 
@@ -100,8 +123,7 @@ def run_lcm(pipeline, ref_image, prompt):
 
     return gen_image
 
-def run_sdxlturbo(pipeline, ref_image, prompt):
-
+def run_model(pipeline, ref_image, prompt):
     generator = prepare_seed()
     gen_image = pipeline(prompt                        = prompt,
                          num_inference_steps           = INFERENCE_STEPS, 
@@ -110,30 +132,51 @@ def run_sdxlturbo(pipeline, ref_image, prompt):
                          height                        = HEIGHT, 
                          generator                     = generator,
                          image                         = ref_image, 
-                         strength                      = DEFAULT_NOISE_STRENGTH, 
+                         strength                      = STRENGH,
                         ).images[0]
                         
     return gen_image
 
-
-
-def run_lcm_or_sdxl(pipeline, img, prompt):
+def run(pipeline, img, prompt, guidance_scale=0.0, inference_steps=30, strength=0.5, random_seed=21, conditioning_scale=0.8, guidance_start=0.0, guidance_end=1.0):
+    # Prepare the seed generator
+    generator = torch.manual_seed(random_seed)
     
-    processor  = process_lcm if MODEL=="lcm" else process_sdxlturbo
-    run_model  = run_lcm if MODEL=="lcm" else run_sdxlturbo
-
-    # result_image, masked_image = get_result_and_mask(image, center_x, center_y, WIDTH, HEIGHT)
-
+    # Select the image processing function
+    processor = process_canny if CANNY else process
+    
+    # Convert the numpy image to a PIL image
     numpy_image = processor(img)
-    pil_image   = convert_numpy_image_to_pil_image(numpy_image)
-    # pil_image_rgb = cv2.cvtColor(pil_image, cv2.COLOR_BGR2RGB)
-    result   = run_model(pipeline, pil_image, prompt)
-    # result = pil_image
+    pil_image = convert_numpy_image_to_pil_image(numpy_image)
 
-    # result_image = cv.cvtColor(np.array(pil_image_rgb), cv.COLOR_RGB2BGR)
-
+    # Run the model
+    if CANNY:
+        gen_image = pipeline(
+            prompt=prompt,
+            num_inference_steps=inference_steps,
+            guidance_scale=guidance_scale,
+            width=WIDTH,
+            height=HEIGHT,
+            generator=generator,
+            image=pil_image,
+            controlnet_conditioning_scale=conditioning_scale,
+            control_guidance_start=guidance_start,
+            control_guidance_end=guidance_end,
+            strength=strength
+        ).images[0]
+    else:
+        gen_image = pipeline(
+            prompt=prompt,
+            num_inference_steps=inference_steps,
+            guidance_scale=guidance_scale,
+            width=WIDTH,
+            height=HEIGHT,
+            generator=generator,
+            image=pil_image,
+            strength=strength
+        ).images[0]
     
-    return result
+    return gen_image
+
 
 
 
